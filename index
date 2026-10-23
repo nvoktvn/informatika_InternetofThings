@@ -1,0 +1,731 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>IoT Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Konsep: peta kota sebagai papan sirkuit. Empat zona adalah empat simpul yang menyala saat dipulihkan. */
+:root{
+  --bg:#F2F6F4; --surface:#FFFFFF; --surface2:#E6EEEB; --fg:#13262B; --muted:#4D666E; --line:#CBD9D4;
+  --teal:#0B6E6A; --teal-ink:#FFFFFF; --teal-soft:#D8EEEA;
+  --accent:#C2410C; --accent-ink:#FFFFFF; --accent-soft:#FCE6DA;
+  --ok:#1B7F4B; --ok-soft:#DCF2E5; --bad:#B42318; --bad-soft:#FBE2DF;
+  --trace:#C2D3CD; --trace2:#7FA39A;
+  --f-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E181B; --surface:#152227; --surface2:#1C2D33; --fg:#E4EEEC; --muted:#9DB4B8; --line:#2B4047;
+    --teal:#4CC2B6; --teal-ink:#06201E; --teal-soft:#16353A;
+    --accent:#FF8A50; --accent-ink:#2A1005; --accent-soft:#3A2418;
+    --ok:#5CD08F; --ok-soft:#14301F; --bad:#FF8479; --bad-soft:#3A1A17;
+    --trace:#243A40; --trace2:#4A7A78; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E181B; --surface:#152227; --surface2:#1C2D33; --fg:#E4EEEC; --muted:#9DB4B8; --line:#2B4047;
+  --teal:#4CC2B6; --teal-ink:#06201E; --teal-soft:#16353A;
+  --accent:#FF8A50; --accent-ink:#2A1005; --accent-soft:#3A2418;
+  --ok:#5CD08F; --ok-soft:#14301F; --bad:#FF8479; --bad-soft:#3A1A17;
+  --trace:#243A40; --trace2:#4A7A78; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(70px + env(safe-area-inset-top,0px))}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.12;margin:0}
+p{margin:0}
+a{color:var(--teal)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* Navigasi */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;padding-block:10px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:1.15rem;text-decoration:none;color:var(--fg)}
+.brand b{color:var(--teal)}
+.links{display:flex;gap:4px;overflow-x:auto;min-width:0;flex:1 1 320px;scrollbar-width:none}
+.links::-webkit-scrollbar{display:none}
+.links a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:.9rem;font-weight:500;padding:6px 10px;border-radius:6px}
+.links a:hover{background:var(--surface2);color:var(--fg)}
+.chip{font-family:var(--f-mono);font-size:.82rem;background:var(--teal-soft);color:var(--fg);padding:5px 10px;border-radius:999px;white-space:nowrap}
+
+/* Hero */
+.hero{border-bottom:1px solid var(--line)}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:36px;align-items:center;padding-block:52px 44px}
+@media (max-width:820px){.hero .wrap{grid-template-columns:1fr;padding-block:32px}}
+.hero h1{font-size:clamp(3rem,9vw,5.2rem);font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+.hero h1 span{color:var(--teal)}
+.hero .sub{font-family:var(--f-display);font-size:clamp(1.15rem,2.6vw,1.45rem);font-weight:500;color:var(--fg);margin-bottom:18px}
+.hero .story{max-width:56ch;color:var(--muted);display:grid;gap:12px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.meta span{font-family:var(--f-mono);font-size:.8rem;border:1px solid var(--line);background:var(--surface);padding:4px 10px;border-radius:999px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.panel .readout{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.panel .readout b{color:var(--fg);font-weight:500}
+.circuit{width:100%;height:auto;display:block}
+.circuit .tr{fill:none;stroke:var(--trace2);stroke-width:3;stroke-linejoin:round}
+.circuit .tr2{fill:none;stroke:var(--trace);stroke-width:2}
+.circuit .dot{fill:var(--trace2)}
+.circuit .node circle{fill:var(--surface);stroke:var(--trace2);stroke-width:3;transition:fill .3s}
+.circuit .node .n{font-family:var(--f-mono);font-size:13px;font-weight:500;fill:var(--fg);text-anchor:middle}
+.circuit .node .nm{font-family:var(--f-body);font-size:11.5px;fill:var(--muted);text-anchor:middle}
+.circuit .node.lit circle{fill:var(--teal);stroke:var(--teal)}
+.circuit .node.lit .n{fill:var(--teal-ink)}
+.circuit .node.boss.lit circle{fill:var(--accent);stroke:var(--accent)}
+.circuit .node.boss.lit .n{fill:var(--accent-ink)}
+
+/* Seksi umum */
+section.block{padding-block:56px;border-bottom:1px solid var(--line)}
+.sec-head{display:grid;gap:8px;margin-bottom:28px;max-width:62ch}
+.sec-head h2{font-size:clamp(1.7rem,4vw,2.4rem)}
+.sec-head p{color:var(--muted)}
+
+/* Peta */
+.mapgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0;position:relative}
+@media (max-width:900px){.mapgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.mapgrid{grid-template-columns:1fr}}
+.mc{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;height:100%;transition:border-color .2s,transform .2s}
+.mc:hover{border-color:var(--teal);transform:translateY(-2px)}
+.mc .zn{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.1em;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.mc h3{font-size:1.3rem}
+.mc .fo{color:var(--muted);font-size:.92rem;flex:1}
+.mc dl{margin:0;display:grid;gap:4px;font-size:.84rem}
+.mc dl div{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:4px}
+.mc dt{color:var(--muted)}
+.mc dd{margin:0;text-align:right;font-weight:500}
+.mc .st{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
+.mc.pulih{border-color:var(--teal);background:var(--teal-soft)}
+.mc.pulih .st{color:var(--fg)}
+.maptime{margin-top:18px;font-size:.92rem;color:var(--muted)}
+
+/* Zona */
+.zhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:6px}
+.zno{font-family:var(--f-mono);font-size:.85rem;letter-spacing:.14em;color:var(--teal);font-weight:500}
+.zhead h2{font-size:clamp(1.9rem,5vw,2.9rem);font-weight:800}
+.ztime{font-family:var(--f-mono);font-size:.8rem;background:var(--surface2);padding:3px 10px;border-radius:999px}
+.zintro{max-width:64ch;color:var(--muted);margin:10px 0 18px}
+.zsum{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:26px}
+.pill{font-family:var(--f-mono);font-size:.78rem;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--fg)}
+.pill.good{background:var(--ok-soft);color:var(--fg);border:1px solid var(--ok)}
+.pill.warn{background:var(--accent-soft);color:var(--fg);border:1px solid var(--accent)}
+.badge{font-size:.82rem;font-weight:600;padding:4px 12px;border-radius:999px;border:1px dashed var(--trace2);color:var(--muted)}
+.badge.got{border:1px solid var(--teal);background:var(--teal);color:var(--teal-ink)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 32px;margin:0 0 34px}
+@media (max-width:700px){.facts{grid-template-columns:1fr}}
+.facts div{border-top:2px solid var(--line);padding-top:10px}
+.facts dt{font-family:var(--f-mono);font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.facts dd{margin:0}
+.qgroup{max-width:760px;margin-bottom:34px}
+.qgroup>h3{font-size:1.35rem;margin-bottom:4px}
+.qgroup>.note{color:var(--muted);font-size:.92rem;margin-bottom:14px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+.qhead{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}
+.qtag{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.qpts{font-family:var(--f-mono);font-size:.76rem;color:var(--teal);font-weight:500}
+.qprompt{margin-bottom:14px;font-weight:500}
+.qprompt small{display:block;font-weight:400;color:var(--muted);margin-top:4px}
+.opts{display:grid;gap:8px;margin-bottom:6px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--teal);background:var(--surface2)}
+.opt:disabled{cursor:default}
+.opt .k{flex:none;width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--trace2);border-radius:6px;font-family:var(--f-mono);font-size:.8rem}
+.opt.chk input{position:absolute;opacity:0;pointer-events:none}
+.opt.chk:has(input:checked){border-color:var(--teal);background:var(--teal-soft)}
+.opt.chk:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.opt.ok{border-color:var(--ok);background:var(--ok-soft)!important}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft)!important}
+.bsrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bsrow .opt{justify-content:center;font-weight:600}
+.primary,.ghost{font:inherit;font-weight:600;border-radius:8px;padding:9px 16px;cursor:pointer;border:1px solid var(--teal)}
+.primary{background:var(--teal);color:var(--teal-ink);margin-top:8px}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.ghost{background:transparent;color:var(--teal);margin-top:10px;font-weight:500;font-size:.88rem;padding:6px 12px}
+.fb{margin-top:12px;padding:12px 14px;border-radius:8px;display:grid;gap:4px;font-size:.94rem}
+.fb strong{font-family:var(--f-display)}
+.fb.ok{background:var(--ok-soft);border:1px solid var(--ok)}
+.fb.bad{background:var(--bad-soft);border:1px solid var(--bad)}
+/* drag and drop */
+.pool,.slot{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.pool{min-height:52px;padding:10px;border:1px dashed var(--trace2);border-radius:10px;margin-bottom:12px;background:var(--surface2)}
+.pool:empty::after{content:"Semua kartu sudah ditempatkan";color:var(--muted);font-size:.86rem}
+.bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.bin{border:1px solid var(--line);border-radius:10px;padding:10px;min-height:96px;min-width:0;background:var(--surface);transition:border-color .15s,background .15s}
+.bin.over{border-color:var(--teal);background:var(--teal-soft)}
+.binname{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;font-weight:500}
+.dcard{font:inherit;font-size:.9rem;text-align:left;color:var(--fg);background:var(--surface);border:1px solid var(--trace2);border-radius:8px;padding:6px 10px;cursor:grab;max-width:100%}
+.dcard.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent)}
+.dcard.ok{border-color:var(--ok);background:var(--ok-soft)}
+.dcard.bad{border-color:var(--bad);background:var(--bad-soft)}
+.dcard:disabled{cursor:default}
+/* menjodohkan */
+.mrow{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:8px 12px;align-items:center;padding:8px;border-radius:8px;border:1px solid transparent}
+@media (max-width:560px){.mrow{grid-template-columns:1fr}}
+.mrow .term{font-family:var(--f-mono);font-weight:500}
+.mrow select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;min-width:0;width:100%}
+.mrow.ok{background:var(--ok-soft);border-color:var(--ok)}
+.mrow.bad{background:var(--bad-soft);border-color:var(--bad)}
+/* mengurutkan */
+.ord{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px;counter-reset:o}
+.oitem{counter-increment:o;display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface)}
+.oitem::before{content:counter(o);flex:none;width:24px;height:24px;display:grid;place-items:center;font-family:var(--f-mono);font-size:.78rem;border-radius:50%;background:var(--surface2)}
+.oitem .ot{flex:1;min-width:0}
+.oitem .ob{display:flex;gap:4px}
+.oitem .ob button{font:inherit;width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.oitem .ob button:hover:not(:disabled){border-color:var(--teal)}
+.oitem .ob button:disabled{opacity:.35;cursor:default}
+.oitem.ok{background:var(--ok-soft);border-color:var(--ok)}
+.oitem.bad{background:var(--bad-soft);border-color:var(--bad)}
+
+/* Boss */
+.case{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:760px;margin-bottom:22px}
+.case .eyebrow{display:block;margin-bottom:8px;color:var(--accent);font-weight:500}
+.sub3{display:grid;gap:12px;max-width:760px;margin:0 0 28px;padding:0;list-style:none}
+.sub3 li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.sub3 .lv{font-family:var(--f-mono);font-size:.8rem;font-weight:500;background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:2px 8px;height:fit-content}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);white-space:nowrap}
+.rb-in{font:inherit;font-family:var(--f-mono);width:76px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.bosstotal{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:14px 0 6px}
+.bosstotal .big{font-family:var(--f-display);font-size:2rem;font-weight:800}
+details.ideal{margin-top:22px;max-width:760px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:4px 16px}
+details.ideal summary{cursor:pointer;font-weight:600;padding:12px 0}
+details.ideal ul{padding-left:20px;display:grid;gap:8px;margin:0 0 14px}
+
+/* Guru */
+.timeline{display:flex;height:18px;border-radius:9px;overflow:hidden;gap:2px;margin:6px 0 14px}
+.timeline i{display:block;background:var(--c,var(--teal))}
+.tl-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 24px;list-style:none;margin:0 0 34px;padding:0}
+.tl-list li{display:grid;gap:2px;font-size:.92rem}
+.tl-list b{font-family:var(--f-mono);font-size:.8rem;display:flex;align-items:center;gap:8px}
+.tl-list b::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c,var(--teal))}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.defs{margin:0;display:grid;gap:14px}
+.defs div{border-top:2px solid var(--line);padding-top:8px}
+.defs dt{font-weight:600;margin-bottom:2px}
+.defs dd{margin:0;color:var(--muted)}
+.h3s{font-size:1.4rem;margin-bottom:14px}
+footer{padding-block:32px;color:var(--muted);font-size:.86rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<nav class="nav" aria-label="Navigasi halaman">
+  <div class="wrap">
+    <a class="brand" href="#top">IoT <b>Quest</b></a>
+    <div class="links">
+      <a href="#peta">Peta</a><a href="#zona-1">Zona 1</a><a href="#zona-2">Zona 2</a><a href="#zona-3">Zona 3</a><a href="#zona-4">Zona 4</a><a href="#guru">Panduan Guru</a>
+    </div>
+    <span class="chip" id="totalPts">Poin 0 / 245</span>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Informatika · Kelas 12 · Fase F</span>
+      <h1>IoT <span>Quest</span></h1>
+      <p class="sub">Misi Pemulihan Kota Cerdas Nusa Sinergi</p>
+      <div class="story">
+        <p>Tahun 2035. Kota Cerdas Nusa Sinergi dikelola ribuan perangkat IoT: lampu jalan yang menyesuaikan cahaya, sensor banjir, kebun hidroponik otomatis, hingga gelang kesehatan warga. Suatu pagi, program jahat bernama <strong>GLITCH</strong> memutus komunikasi seluruh perangkat. Lampu padam, pompa air berhenti, dan data warga kacau.</p>
+        <p>Wali Kota memanggil Tim Teknisi Digital. Setiap tim melewati empat zona, memulihkan sistem di tiap zona dengan menjawab tantangan, lalu menghadapi GLITCH di Pusat Komando.</p>
+      </div>
+      <div class="meta"><span>Internet of Things</span><span>45 menit</span><span>Tim 4–5 siswa</span></div>
+    </div>
+    <div class="panel">
+      <div class="readout"><span>KOTA NUSA SINERGI</span><b id="cityStatus">0 dari 4 zona pulih</b></div>
+      <svg class="circuit" viewBox="0 0 420 300" role="img" aria-label="Jalur empat zona pada papan sirkuit. Simpul menyala saat zona dipulihkan.">
+        <path class="tr2" d="M20 110 H70 V50 H170"/>
+        <path class="tr2" d="M250 40 H300 V20 H400"/>
+        <circle class="dot" cx="170" cy="50" r="4"/><circle class="dot" cx="400" cy="20" r="4"/>
+        <path class="tr" d="M20 250 H120 V160 H220 V220 H320 V80 H400"/>
+        <g class="node" id="nd-1"><circle cx="70" cy="250" r="16"/><text class="n" x="70" y="255">1</text><text class="nm" x="70" y="282">Desa Sensor</text></g>
+        <g class="node" id="nd-2"><circle cx="170" cy="160" r="16"/><text class="n" x="170" y="165">2</text><text class="nm" x="170" y="190">Jalur Data</text></g>
+        <g class="node" id="nd-3"><circle cx="270" cy="220" r="16"/><text class="n" x="270" y="225">3</text><text class="nm" x="270" y="250">Distrik Cerdas</text></g>
+        <g class="node boss" id="nd-4"><circle cx="360" cy="80" r="16"/><text class="n" x="360" y="85">4</text><text class="nm" x="395" y="56" style="text-anchor:end">Pusat Komando</text></g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="peta">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Peta gim</span>
+      <h2>Empat zona, satu per satu</h2>
+      <p>Tim hanya boleh masuk zona berikutnya setelah memenuhi syarat lulus zona sebelumnya. Pilih zona untuk melihat misi dan soalnya.</p>
+    </div>
+    <ol class="mapgrid" id="mapgrid"></ol>
+    <p class="maptime">Waktu sisanya: pembukaan dan pembagian tim 5 menit, refleksi dan penghargaan 3 menit. Total 45 menit.</p>
+  </div>
+</section>
+
+<div id="zones"></div>
+
+<section class="block" id="guru">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Untuk guru</span>
+      <h2>Mekanik permainan dan panduan guru</h2>
+      <p>Total poin maksimal 245. Guru berperan sebagai Wali Kota: membacakan narasi, memberi petunjuk, dan menilai.</p>
+    </div>
+
+    <h3 class="h3s">Aturan pergerakan dan syarat lulus</h3>
+    <div class="tablewrap" style="margin-bottom:34px"><table>
+      <thead><tr><th>Zona</th><th>Jumlah soal</th><th>Poin maks</th><th>Syarat lulus</th><th>Lencana</th></tr></thead>
+      <tbody>
+        <tr><td>1. Desa Sensor</td><td>4 PG</td><td class="num">40</td><td>Minimal 3 benar</td><td>Penjaga Sensor</td></tr>
+        <tr><td>2. Jalur Data</td><td>2 PGK + 3 Benar/Salah</td><td class="num">45</td><td>Minimal 4 benar</td><td>Navigator Jaringan</td></tr>
+        <tr><td>3. Distrik Cerdas</td><td>2 Drag and Drop + 1 Menjodohkan + 1 Mengurutkan</td><td class="num">60</td><td>Minimal 3 benar</td><td>Arsitek Kota Cerdas</td></tr>
+        <tr><td>4. Pusat Komando</td><td>1 kasus HOTS (3 sub-soal)</td><td class="num">100</td><td>Skor rubrik minimal 70</td><td>Pahlawan Nusa Sinergi</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="h3s">Alur 45 menit</h3>
+    <div class="timeline" role="img" aria-label="Pembagian waktu: pembukaan 5, zona 1 8, zona 2 9, zona 3 10, boss 10, refleksi 3 menit">
+      <i style="flex:5;--c:var(--trace2)"></i><i style="flex:8;--c:color-mix(in srgb,var(--teal) 45%,var(--surface2))"></i><i style="flex:9;--c:color-mix(in srgb,var(--teal) 65%,var(--surface2))"></i><i style="flex:10;--c:var(--teal)"></i><i style="flex:10;--c:var(--accent)"></i><i style="flex:3;--c:var(--trace2)"></i>
+    </div>
+    <ul class="tl-list">
+      <li style="--c:var(--trace2)"><b>Menit 0–5</b>Pembukaan: narasi GLITCH, pembagian tim dan peran, penjelasan aturan.</li>
+      <li style="--c:color-mix(in srgb,var(--teal) 45%,var(--surface2))"><b>Menit 5–13</b>Zona 1: Desa Sensor.</li>
+      <li style="--c:color-mix(in srgb,var(--teal) 65%,var(--surface2))"><b>Menit 13–22</b>Zona 2: Jalur Data.</li>
+      <li style="--c:var(--teal)"><b>Menit 22–32</b>Zona 3: Distrik Cerdas.</li>
+      <li style="--c:var(--accent)"><b>Menit 32–42</b>Zona 4: Boss Battle. 2 menit baca, 6 menit diskusi dan menulis, 2 menit presentasi satu atau dua tim.</li>
+      <li style="--c:var(--trace2)"><b>Menit 42–45</b>Rekap poin, pemberian lencana, dan refleksi singkat.</li>
+    </ul>
+
+    <div class="two">
+      <div>
+        <h3 class="h3s">Aturan tambahan</h3>
+        <dl class="defs">
+          <div><dt>Token Energi</dt><dd>Tim memperoleh token dari Zona 1 dan Zona 2. Satu token bisa ditukar dengan satu petunjuk dari guru atau satu kesempatan menjawab ulang satu soal. Token tidak berlaku untuk Boss Battle.</dd></div>
+          <div><dt>Jalur Perbaikan</dt><dd>Tim yang belum lulus mendapat penjelasan singkat guru (maksimal 1 menit), lalu mengerjakan ulang dua soal yang salah dengan poin setengah, kemudian langsung lanjut agar waktu tidak habis.</dd></div>
+          <div><dt>Pembagian peran</dt><dd>Navigator membaca soal, Teknisi memegang kartu atau perangkat, Pencatat menulis jawaban, Juru Bicara menyampaikan jawaban. Peran bergilir di tiap zona.</dd></div>
+          <div><dt>Pemenang</dt><dd>Tim dengan total poin tertinggi menjadi Tim Teknisi Terbaik. Tim yang memperoleh keempat lencana mendapat gelar Master IoT.</dd></div>
+        </dl>
+      </div>
+      <div>
+        <h3 class="h3s">Panduan guru</h3>
+        <dl class="defs">
+          <div><dt>Persiapan</dt><dd>Cetak peta zona dan kartu soal, atau salin soal ke Wordwall, Quizizz, atau Google Slides. Siapkan lembar jawaban Boss Battle dan rubrik.</dd></div>
+          <div><dt>Tujuan pembelajaran</dt><dd>Siswa mampu memahami dan menjelaskan peran informatika masa kini dan mendatang, khususnya terkait IoT: komponen dan cara kerjanya, penerapannya, keamanannya, dan dampak etisnya.</dd></div>
+          <div><dt>Jika waktu kurang</dt><dd>Kurangi Zona 2 menjadi tiga soal (satu PGK dan dua Benar/Salah) dan persingkat presentasi Boss Battle menjadi satu tim.</dd></div>
+          <div><dt>Jika kelas sudah mahir</dt><dd>Tambahkan tantangan di Boss Battle, misalnya meminta tim menggambar diagram arsitektur sistem yang diperbaiki.</dd></div>
+          <div><dt>Refleksi penutup</dt><dd>Tanyakan: bagian IoT mana yang menurut kalian paling berisiko, dan profesi informatika apa yang paling menarik untuk masa depan?</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">IoT Quest · Informatika Kelas 12 · Fase F. Semua soal di halaman ini bisa dicoba langsung; tombol Ulangi soal mengembalikannya ke kondisi awal.</div></footer>
+
+<script>
+(function(){
+'use strict';
+function el(tag, props){
+  var e=document.createElement(tag), k;
+  props=props||{};
+  for(k in props){
+    if(k==='class') e.className=props[k];
+    else if(k.indexOf('on')===0) e.addEventListener(k.slice(2),props[k]);
+    else e.setAttribute(k,props[k]);
+  }
+  for(var i=2;i<arguments.length;i++){
+    var kids=[].concat(arguments[i]);
+    for(var j=0;j<kids.length;j++){
+      var c=kids[j];
+      if(c==null||c===false) continue;
+      e.append(c.nodeType?c:document.createTextNode(c));
+    }
+  }
+  return e;
+}
+var L='ABCD';
+var TYPE={pg:'Pilihan Ganda',pgk:'Pilihan Ganda Kompleks',bs:'Benar / Salah',dnd:'Drag and Drop',match:'Menjodohkan',order:'Mengurutkan'};
+
+/* ---------- Data ---------- */
+var zones=[
+ {id:1,name:'Desa Sensor',time:8,focus:'Pengertian IoT, komponen, dan peran informatika masa kini',type:'Pilihan Ganda',pass:3,passText:'Minimal 3 dari 4 soal benar',badge:'Penjaga Sensor',
+  intro:'Di Desa Sensor, GLITCH mematikan sensor dan aktuator dasar kota. Tim harus memahami apa itu IoT dan komponen penyusunnya sebelum bisa menyalakan kembali perangkat.',
+  quest:'Menjelaskan pengertian IoT, lima komponen utamanya (sensor, aktuator, mikrokontroler, konektivitas, platform/cloud), dan peran informatika masa kini dalam menghubungkan benda fisik dengan data dan program.',
+  activity:'Tim membuka tiga Kartu Perangkat (lampu jalan, pompa air, gelang kesehatan) dan menyebut sensor serta aktuator pada tiap kartu, lalu mengerjakan 4 soal Pilihan Ganda.',
+  reward:'10 poin per soal benar (maksimal 40), lencana Penjaga Sensor, dan 1 token Energi untuk dipakai di Zona 2.',
+  groups:[{title:'Bank soal: Pilihan Ganda (PG)',note:'Pilih satu jawaban. Hasil langsung ditampilkan.',qs:[
+   {id:'z1q1',type:'pg',pts:10,prompt:'Pengertian Internet of Things (IoT) yang paling tepat adalah ...',
+    options:['Jaringan yang hanya menghubungkan komputer di satu ruangan','Konsep benda fisik yang dilengkapi sensor, perangkat lunak, dan konektivitas sehingga dapat mengumpulkan serta bertukar data melalui internet','Layanan penyimpanan berkas di internet','Aplikasi untuk berkomunikasi di media sosial'],answer:1,
+    why:'IoT menekankan benda fisik yang terhubung dan bertukar data, bukan sekadar komputer atau aplikasi.'},
+   {id:'z1q2',type:'pg',pts:10,prompt:'Pada sistem irigasi otomatis, komponen yang membuka katup air setelah menerima perintah dari program adalah ...',
+    options:['Sensor','Aktuator','Router','Basis data'],answer:1,
+    why:'Aktuator mengubah perintah digital menjadi aksi fisik; sensor justru mengubah kondisi fisik menjadi data.'},
+   {id:'z1q3',type:'pg',pts:10,prompt:'Pada prototipe penyiraman tanaman, ESP32 membaca data sensor kelembapan tanah lalu mengirimkannya lewat Wi-Fi. Peran ESP32 adalah ...',
+    options:['Aktuator penyiram','Mikrokontroler yang mengolah data sensor dan terhubung ke jaringan','Sumber daya listrik','Media penyimpanan data jangka panjang'],answer:1,
+    why:'ESP32 adalah mikrokontroler dengan Wi-Fi bawaan: ia membaca sensor, mengolah, dan mengirim data.'},
+   {id:'z1q4',type:'pg',pts:10,prompt:'Manakah yang paling menggambarkan peran informatika pada lampu jalan pintar?',
+    options:['Membuat lampu dari bahan yang hemat energi','Merancang program yang membaca sensor cahaya, memutuskan kapan lampu menyala, dan mengirim datanya ke dasbor pemantauan','Memasang tiang lampu di sepanjang jalan','Menghitung tagihan listrik bulanan'],answer:1,
+    why:'Informatika berperan pada logika program, pengolahan data, dan integrasi sistem.'}
+  ]}]},
+ {id:2,name:'Jalur Data',time:9,focus:'Cara kerja IoT: konektivitas, cloud, big data, dan keamanan',type:'PGK dan Benar/Salah',pass:4,passText:'Minimal 4 dari 5 soal benar',badge:'Navigator Jaringan',
+  intro:'Sensor sudah menyala, tetapi data dari seluruh kota tidak sampai ke pusat. Tim harus memperbaiki jalur data dari perangkat sampai keputusan diambil, sambil menutup celah keamanan yang dibuka GLITCH.',
+  quest:'Menjelaskan alur kerja IoT (sensor, konektivitas, cloud, analisis data, aksi) dan peran informatika masa kini di tiap tahap: pemrograman, jaringan, basis data, analisis data, dan keamanan siber.',
+  activity:'Tim menyusun alur data pada peta, memilih teknologi konektivitas yang tepat, lalu menilai pernyataan tentang protokol dan keamanan.',
+  reward:'PGK 15 poin per soal, Benar/Salah 5 poin per soal (maksimal 45), lencana Navigator Jaringan, dan 1 token Energi tambahan jika semua soal benar.',
+  groups:[
+   {title:'Bank soal: Pilihan Ganda Kompleks (PGK)',note:'Pilih semua jawaban yang benar. Poin penuh hanya jika seluruh pilihan benar terpilih dan tidak ada pilihan salah.',qs:[
+    {id:'z2q1',type:'pgk',pts:15,prompt:'Sensor tanah di kebun seluas puluhan hektare tidak memiliki listrik jaringan dan hanya mengirim data kecil secara berkala dalam jarak jauh. Teknologi konektivitas yang sesuai adalah ...',
+     options:['LoRaWAN','NB-IoT','Kabel HDMI','Kabel LAN ke setiap sensor'],answer:[0,1],
+     why:'Keduanya dirancang untuk daya rendah dan jangkauan luas. HDMI untuk video, sedangkan LAN kabel tidak praktis di lahan luas.'},
+    {id:'z2q2',type:'pgk',pts:15,prompt:'Manakah yang termasuk risiko keamanan pada perangkat IoT?',
+     options:['Kata sandi bawaan pabrik tidak diganti','Firmware tidak pernah diperbarui','Data dikirim tanpa enkripsi','Sensor ditenagai baterai'],answer:[0,1,2],
+     why:'Sumber daya baterai bukan celah keamanan.'}]},
+   {title:'Bank soal: Benar / Salah',note:'Tentukan apakah pernyataan benar atau salah.',qs:[
+    {id:'z2q3',type:'bs',pts:5,prompt:'Perangkat IoT tidak dapat menjalankan fungsi apa pun jika koneksi internet terputus.',answer:false,
+     why:'Banyak perangkat tetap menjalankan logika dasar secara lokal (edge computing) dan mengirim data setelah koneksi pulih.'},
+    {id:'z2q4',type:'bs',pts:5,prompt:'MQTT adalah protokol pesan ringan berbasis publish/subscribe yang banyak dipakai pada IoT.',answer:true,
+     why:'Cocok untuk perangkat dengan sumber daya dan bandwidth terbatas.'},
+    {id:'z2q5',type:'bs',pts:5,prompt:'Data dari ribuan sensor akan otomatis menghasilkan keputusan cerdas tanpa perlu dianalisis.',answer:false,
+     why:'Data mentah perlu diolah dan dianalisis, misalnya dengan program atau kecerdasan buatan, agar menjadi keputusan.'}]}
+  ]},
+ {id:3,name:'Distrik Cerdas',time:10,focus:'Penerapan IoT di berbagai bidang dan dampaknya',type:'Drag and Drop, Menjodohkan, Mengurutkan',pass:3,passText:'Minimal 3 dari 4 soal benar',badge:'Arsitek Kota Cerdas',
+  intro:'Jalur data pulih, tetapi lima distrik kota (rumah, kebun, klinik, jalan raya, pabrik) masih kacau karena perangkatnya salah dipasangkan. Tim harus mengenali penerapan IoT di tiap bidang dan menyusun ulang alur kerjanya.',
+  quest:'Menjelaskan penerapan IoT di bidang rumah, pertanian, kesehatan, kota, dan industri, serta peran informatika masa kini dan mendatang di dalamnya, termasuk dampak positif dan tantangannya (privasi, etika, limbah elektronik).',
+  activity:'Tim menyeret kartu ke tempat yang benar, menjodohkan istilah, dan mengurutkan alur sistem peringatan banjir.',
+  reward:'15 poin per soal (maksimal 60), lencana Arsitek Kota Cerdas, dan kunci akses ke Pusat Komando.',
+  groups:[
+   {title:'Bank soal: Drag and Drop',note:'Seret kartu ke kolom tujuan. Di ponsel atau layar sentuh, ketuk kartu lalu ketuk kolom tujuan. Ketuk kartu di dalam kolom untuk mengembalikannya.',qs:[
+    {id:'z3q1',type:'dnd',pts:15,prompt:'Kelompokkan komponen. Seret setiap kartu ke kolom komponen yang tepat.',
+     bins:['Sensor','Aktuator','Mikrokontroler','Platform / cloud'],
+     cards:[['Sensor kelembapan tanah',0],['Sensor gerak PIR',0],['Pompa air mini',1],['Servo pembuka pintu',1],['ESP32',2],['Dasbor web pemantau data',3]],order:[4,2,0,5,3,1],
+     why:'Sensor mengukur, aktuator bertindak, mikrokontroler mengolah dan menghubungkan, platform menyimpan serta menampilkan data.'},
+    {id:'z3q2',type:'dnd',pts:15,prompt:'Pasangkan situasi dengan bidangnya. Seret setiap situasi ke bidang penerapan IoT.',
+     bins:['Rumah pintar','Pertanian pintar','Kesehatan','Kota pintar','Industri'],
+     cards:[['Lampu menyala otomatis saat penghuni masuk ruangan',0],['Penyiraman berjalan sesuai kelembapan tanah',1],['Gelang memantau detak jantung dan mengirim peringatan ke dokter',2],['Lampu lalu lintas menyesuaikan kepadatan kendaraan',3],['Sensor getaran memprediksi kerusakan mesin sebelum macet',4]],order:[2,4,0,3,1],
+     why:'Tiap situasi memakai sensor dan program yang sama prinsipnya, tetapi berbeda bidang penerapannya.'}]},
+   {title:'Bank soal: Menjodohkan dan Mengurutkan',note:'Pilih penjelasan untuk tiap istilah, lalu susun urutan langkah.',qs:[
+    {id:'z3q3',type:'match',pts:15,prompt:'Jodohkan istilah dengan penjelasannya.',
+     pairs:[['MQTT','Protokol pesan ringan berbasis publish/subscribe'],['Gateway','Perangkat penghubung sensor lokal dengan jaringan atau cloud'],['Edge computing','Pengolahan data di dekat perangkat, bukan di server pusat'],['Firmware','Perangkat lunak yang tertanam pada perangkat keras'],['Aktuator','Komponen yang melakukan aksi fisik berdasarkan perintah']],shuf:[3,1,4,0,2],
+     why:'Kelima istilah ini sering muncul dalam rancangan sistem IoT.'},
+    {id:'z3q4',type:'order',pts:15,prompt:'Urutkan langkah kerja sistem peringatan banjir dari awal sampai akhir.',
+     items:['Sensor ketinggian air mengukur permukaan sungai.','Mikrokontroler membaca nilai sensor dan mengirimnya lewat jaringan.','Platform cloud menerima dan menyimpan data.','Program menganalisis data dan membandingkannya dengan ambang batas.','Sirene dan notifikasi ke warga diaktifkan.'],start:[2,0,4,1,3],
+     why:'Urutan ini mewakili alur umum IoT: sensing, transmisi, penyimpanan, analisis, lalu aksi.'}]}
+  ]},
+ {id:4,name:'Pusat Komando',time:10,focus:'Analisis kasus dan prediksi peran informatika masa depan',type:'Boss Battle HOTS',pass:70,passText:'Skor rubrik minimal 70 dari 100',badge:'Pahlawan Nusa Sinergi',boss:true,max:100,
+  intro:'Di puncak menara, GLITCH muncul sebagai ancaman terakhir. Tim yang berhasil mengurangi kekuatan GLITCH sampai 30 dari 100 poin akan memulihkan seluruh kota.',
+  quest:'Menganalisis kasus nyata, mengevaluasi tindakan pemulihan, dan merancang pembaruan sistem IoT, sambil menjelaskan peran informatika masa kini dan peluangnya di masa depan, termasuk pertimbangan etika.',
+  activity:'Tim membaca berkas kasus (2 menit), berdiskusi dan menulis jawaban (6 menit), lalu satu atau dua tim mempresentasikan (2 menit).',
+  reward:'Maksimal 100 poin, lencana Pahlawan Nusa Sinergi, dan gelar tim terbaik berdasarkan total poin seluruh zona.'}
+];
+var RUBRIC=[
+ ['Analisis celah dan dampak (Soal 1)',25,'Tiga celah tepat dan dikaitkan dengan komponen IoT beserta akibatnya'],
+ ['Evaluasi prioritas (Soal 2)',25,'Urutan tindakan logis dan alasan menyebut risiko serta dampak ke warga'],
+ ['Rancangan solusi dan peran informatika (Soal 3)',30,'Minimal dua fitur teknis relevan dan peran profesi dijelaskan dengan contoh konkret'],
+ ['Etika dan kejelasan penyampaian',20,'Pertimbangan etika tepat; jawaban runtut, ringkas, serta kompak antaranggota tim']
+];
+
+/* ---------- State ---------- */
+var state={};
+var bossVals=[0,0,0,0], bossFilled=false;
+zones.forEach(function(z){
+  if(z.boss){z.count=1;return;}
+  z.count=0;z.max=0;
+  z.groups.forEach(function(g){g.qs.forEach(function(q){z.count++;z.max+=q.pts;});});
+});
+var MAX=zones.reduce(function(a,z){return a+z.max;},0);
+
+function $(id){return document.getElementById(id);}
+function updateScore(){
+  var total=0,pulih=0;
+  zones.forEach(function(z){
+    var pts=0,good=0,ans=0,passed=false,status;
+    if(z.boss){
+      pts=bossVals.reduce(function(a,b){return a+b;},0);
+      ans=bossFilled?1:0;
+      passed=bossFilled&&pts>=70;
+      status=passed?'Zona pulih':(bossFilled?'Belum mencapai 70':'Belum dinilai');
+    }else{
+      z.groups.forEach(function(g){g.qs.forEach(function(q){
+        var s=state[q.id];
+        if(s){ans++;if(s.ok){good++;pts+=q.pts;}}
+      });});
+      passed=good>=z.pass;
+      status=passed?'Zona pulih':(ans===z.count?'Belum lulus: Jalur Perbaikan':'Dijawab '+ans+' dari '+z.count);
+    }
+    total+=pts; if(passed) pulih++;
+    var zp=$('zp-'+z.id); if(zp){zp.textContent=status;zp.className='pill'+(passed?' good':((z.boss?bossFilled:ans===z.count)?' warn':''));}
+    var zpts=$('zpts-'+z.id); if(zpts) zpts.textContent=pts+' / '+z.max+' poin';
+    var bd=$('bd-'+z.id); if(bd) bd.className='badge'+(passed?' got':'');
+    var mc=$('mc-'+z.id); if(mc) mc.className='mc'+(passed?' pulih':'');
+    var ms=$('ms-'+z.id); if(ms) ms.textContent=passed?'Pulih · '+pts+' poin':status;
+    var nd=$('nd-'+z.id); if(nd) nd.setAttribute('class','node'+(z.boss?' boss':'')+(passed?' lit':''));
+  });
+  $('totalPts').textContent='Poin '+total+' / '+MAX;
+  $('cityStatus').textContent=pulih===4?'Kota pulih sepenuhnya':pulih+' dari 4 zona pulih';
+}
+
+/* ---------- Pembangun soal ---------- */
+var BUILD={};
+BUILD.pg=function(q,body,finish){
+  var list=el('div',{class:'opts'});
+  q.options.forEach(function(o,i){
+    var b=el('button',{class:'opt',type:'button'},el('span',{class:'k'},L[i]),el('span',{},o));
+    b.addEventListener('click',function(){
+      [].slice.call(list.children).forEach(function(c,j){
+        c.disabled=true;
+        if(j===q.answer) c.classList.add('ok'); else if(j===i) c.classList.add('bad');
+      });
+      var ok=i===q.answer;
+      finish(ok, ok?q.why:'Kunci: '+L[q.answer]+'. '+q.why);
+    });
+    list.append(b);
+  });
+  body.append(list);
+};
+BUILD.pgk=function(q,body,finish){
+  var list=el('div',{class:'opts'}), boxes=[];
+  q.options.forEach(function(o,i){
+    var cb=el('input',{type:'checkbox',id:q.id+'-'+i});
+    boxes.push(cb);
+    list.append(el('label',{class:'opt chk','for':q.id+'-'+i},cb,el('span',{class:'k'},L[i]),el('span',{},o)));
+  });
+  var btn=el('button',{class:'primary',type:'button'},'Periksa jawaban');
+  btn.addEventListener('click',function(){
+    var sel=[];boxes.forEach(function(b,i){if(b.checked)sel.push(i);});
+    var ok=sel.length===q.answer.length&&sel.every(function(i){return q.answer.indexOf(i)>=0;});
+    boxes.forEach(function(b,i){
+      b.disabled=true;
+      var lab=b.parentNode;
+      if(q.answer.indexOf(i)>=0) lab.classList.add('ok'); else if(b.checked) lab.classList.add('bad');
+    });
+    btn.remove();
+    finish(ok, ok?q.why:'Kunci: '+q.answer.map(function(i){return L[i];}).join(', ')+'. '+q.why);
+  });
+  body.append(list,btn);
+};
+BUILD.bs=function(q,body,finish){
+  var row=el('div',{class:'bsrow'});
+  [['Benar',true],['Salah',false]].forEach(function(p){
+    var b=el('button',{class:'opt',type:'button'},p[0]);
+    b.addEventListener('click',function(){
+      [].slice.call(row.children).forEach(function(c){c.disabled=true;});
+      var ok=p[1]===q.answer;
+      b.classList.add(ok?'ok':'bad');
+      if(!ok) row.children[q.answer?0:1].classList.add('ok');
+      finish(ok,(ok?'':'Kunci: '+(q.answer?'Benar':'Salah')+'. ')+q.why);
+    });
+    row.append(b);
+  });
+  body.append(row);
+};
+BUILD.dnd=function(q,body,finish){
+  var at=q.cards.map(function(){return -1;}), sel=-1, locked=false;
+  var pool=el('div',{class:'pool'});
+  var binEls=[],slots=[];
+  var cards=q.cards.map(function(c,i){
+    var b=el('button',{class:'dcard',type:'button',draggable:'true'},c[0]);
+    b.addEventListener('click',function(e){
+      if(locked) return;
+      e.stopPropagation();
+      if(at[i]>=0){at[i]=-1;sel=-1;}
+      else{sel=(sel===i)?-1:i;}
+      paint();
+    });
+    b.addEventListener('dragstart',function(e){
+      if(locked){e.preventDefault();return;}
+      try{e.dataTransfer.setData('text/plain',String(i));e.dataTransfer.effectAllowed='move';}catch(_){}
+      sel=-1;
+    });
+    return b;
+  });
+  function move(i,bi){at[i]=bi;sel=-1;paint();}
+  function dropOn(bi,node){
+    node.addEventListener('dragover',function(e){if(locked)return;e.preventDefault();if(bi>=0)node.classList.add('over');});
+    node.addEventListener('dragleave',function(){node.classList.remove('over');});
+    node.addEventListener('drop',function(e){
+      e.preventDefault();node.classList.remove('over');
+      if(locked) return;
+      var i=parseInt(e.dataTransfer.getData('text/plain'),10);
+      if(!isNaN(i)) move(i,bi);
+    });
+  }
+  var bins=el('div',{class:'bins'});
+  q.bins.forEach(function(n,bi){
+    var slot=el('div',{class:'slot'});
+    var w=el('div',{class:'bin'},el('div',{class:'binname'},n),slot);
+    w.addEventListener('click',function(e){
+      if(locked||sel<0||e.target.closest('.dcard')) return;
+      move(sel,bi);
+    });
+    dropOn(bi,w);
+    slots.push(slot);binEls.push(w);bins.append(w);
+  });
+  dropOn(-1,pool);
+  var btn=el('button',{class:'primary',type:'button'},'Periksa jawaban');
+  btn.addEventListener('click',function(){
+    locked=true;
+    var ok=true;
+    cards.forEach(function(c,i){
+      var good=at[i]===q.cards[i][1];
+      if(!good) ok=false;
+      c.classList.remove('sel');c.classList.add(good?'ok':'bad');c.disabled=true;c.draggable=false;
+    });
+    btn.remove();
+    finish(ok, ok?q.why:'Kunci: '+q.cards.map(function(c){return c[0]+' → '+q.bins[c[1]];}).join('; ')+'.');
+  });
+  function paint(){
+    var inPool=[];
+    slots.forEach(function(s){s.replaceChildren();});
+    q.order.forEach(function(i){
+      cards[i].classList.toggle('sel',sel===i);
+      if(at[i]<0) inPool.push(cards[i]); else slots[at[i]].append(cards[i]);
+    });
+    pool.replaceChildren.apply(pool,inPool);
+    btn.disabled=at.indexOf(-1)>=0;
+  }
+  body.append(pool,bins,btn);
+  paint();
+};
+BUILD.match=function(q,body,finish){
+  var opts=q.shuf.map(function(i){return q.pairs[i][1];});
+  var rows=q.pairs.map(function(p,i){
+    var id=q.id+'-'+i;
+    var s=el('select',{id:id});
+    s.append(el('option',{value:''},'Pilih penjelasan…'));
+    opts.forEach(function(o){s.append(el('option',{value:o},o));});
+    return {sel:s,row:el('div',{class:'mrow'},el('label',{class:'term','for':id},p[0]),s)};
+  });
+  var btn=el('button',{class:'primary',type:'button'},'Periksa jawaban');
+  btn.addEventListener('click',function(){
+    var ok=true;
+    rows.forEach(function(r,i){
+      var good=r.sel.value===q.pairs[i][1];
+      if(!good) ok=false;
+      r.row.classList.add(good?'ok':'bad');r.sel.disabled=true;
+    });
+    btn.remove();
+    finish(ok, ok?q.why:'Kunci: '+q.pairs.map(function(p){return p[0]+' = '+p[1];}).join('; ')+'.');
+  });
+  body.append(el('div',{},rows.map(function(r){return r.row;})),btn);
+};
+BUILD.order=function(q,body,finish){
+  var seq=q.start.slice(), locked=false;
+  var list=el('ol',{class:'ord'});
+  var btn=el('button',{class:'primary',type:'button'},'Periksa urutan');
+  function swap(a,b){var t=seq[a];seq[a]=seq[b];seq[b]=t;paint();}
+  function paint(){
+    list.replaceChildren.apply(list,seq.map(function(idx,pos){
+      var up=el('button',{type:'button','aria-label':'Naikkan langkah'},'↑');
+      var dn=el('button',{type:'button','aria-label':'Turunkan langkah'},'↓');
+      up.disabled=locked||pos===0; dn.disabled=locked||pos===seq.length-1;
+      up.addEventListener('click',function(){swap(pos,pos-1);});
+      dn.addEventListener('click',function(){swap(pos,pos+1);});
+      var li=el('li',{class:'oitem'},el('span',{class:'ot'},q.items[idx]),el('span',{class:'ob'},up,dn));
+      if(locked) li.classList.add(idx===pos?'ok':'bad');
+      return li;
+    }));
+  }
+  btn.addEventListener('click',function(){
+    locked=true;
+    var ok=seq.every(function(idx,pos){return idx===pos;});
+    paint();btn.remove();
+    finish(ok, ok?q.why:'Urutan yang benar: '+q.items.map(function(t,i){return (i+1)+'. '+t;}).join(' ')+' '+q.why);
+  });
+  body.append(list,btn);
+  paint();
+};
+
+function qcard(q,n){
+  var art=el('article',{class:'q',id:q.id});
+  var body=el('div',{});
+  art.append(el('div',{class:'qhead'},el('span',{class:'qtag'},TYPE[q.type]),el('span',{class:'qpts'},q.pts+' poin')),
+    el('p',{class:'qprompt'},'Soal '+n+'. '+q.prompt),body);
+  function build(){
+    body.replaceChildren();
+    BUILD[q.type](q,body,function(ok,why){
+      state[q.id]={ok:ok};
+      body.append(el('div',{class:'fb '+(ok?'ok':'bad'),role:'status'},el('strong',{},ok?'Benar, +'+q.pts+' poin':'Belum tepat'),el('span',{},why)));
+      body.append(el('button',{class:'ghost',type:'button',onclick:function(){delete state[q.id];build();updateScore();}},'Ulangi soal'));
+      updateScore();
+    });
+  }
+  build();
+  return art;
+}
+
+/* ---------- Render ---------- */
+var map=$('mapgrid');
+zones.forEach(function(z){
+  map.append(el('li',{},el('a',{class:'mc',id:'mc-'+z.id,href:'#zona-'+z.id},
+    el('div',{class:'zn'},el('span',{},'ZONA '+z.id),el('span',{},z.time+' menit')),
+    el('h3',{},z.name),
+    el('p',{class:'fo'},z.focus),
+    el('dl',{},el('div',{},el('dt',{},'Jenis soal'),el('dd',{},z.type)),el('div',{},el('dt',{},'Lencana'),el('dd',{},z.badge))),
+    el('span',{class:'st',id:'ms-'+z.id},'Belum dimulai'))));
+});
+
+var root=$('zones');
+zones.forEach(function(z){
+  var wrap=el('div',{class:'wrap'});
+  wrap.append(el('header',{class:'zhead'},el('span',{class:'zno'},'ZONA '+z.id),el('h2',{},z.name),el('span',{class:'ztime'},z.time+' menit')));
+  wrap.append(el('p',{class:'zintro'},z.intro));
+  wrap.append(el('div',{class:'zsum'},el('span',{class:'pill',id:'zp-'+z.id},'Belum dimulai'),el('span',{class:'mono',id:'zpts-'+z.id},'0 / '+z.max+' poin'),el('span',{class:'badge',id:'bd-'+z.id},'Lencana: '+z.badge)));
+  wrap.append(el('dl',{class:'facts'},
+    el('div',{},el('dt',{},'Misi utama (Main Quest)'),el('dd',{},z.quest)),
+    el('div',{},el('dt',{},'Aktivitas'),el('dd',{},z.activity)),
+    el('div',{},el('dt',{},'Imbalan'),el('dd',{},z.reward)),
+    el('div',{},el('dt',{},'Syarat lulus'),el('dd',{},z.passText))));
+  if(z.boss){
+    wrap.append(el('div',{class:'case'},el('span',{class:'eyebrow'},'Berkas kasus: serangan GLITCH'),
+      el('p',{},'Kota memasang 500 gelang kesehatan untuk lansia dan sistem pompa air otomatis di sembilan kelurahan. Semua perangkat memakai kata sandi bawaan pabrik, mengirim data ke cloud tanpa enkripsi, dan firmware belum diperbarui sejak dipasang. Suatu malam, GLITCH masuk lewat kamera pengawas yang kata sandinya belum diganti. Hasilnya: data detak jantung warga bocor, dan pompa air menyala dan mati sendiri sehingga dua kelurahan kekurangan air.')));
+    var subs=[['C4','Soal 1 (Analisis)','Identifikasi tiga celah keamanan pada kasus tersebut. Untuk tiap celah, jelaskan bagian IoT yang terdampak (sensor, jaringan, cloud, atau aktuator) dan akibatnya.'],
+      ['C5','Soal 2 (Evaluasi)','Pilih tiga tindakan pemulihan paling mendesak, urutkan berdasarkan prioritas, dan beri alasan mengapa urutan itu paling tepat.'],
+      ['C6','Soal 3 (Mencipta)','Rancang pembaruan sistem agar serangan serupa tidak terulang. Sebutkan minimal dua fitur teknis. Jelaskan juga peran satu profesi bidang informatika (misalnya ahli keamanan siber, analis data, atau pengembang IoT) dalam sepuluh tahun ke depan, serta satu pertimbangan etika yang harus dijaga, misalnya privasi data kesehatan.']];
+    wrap.append(el('ul',{class:'sub3'},subs.map(function(s){return el('li',{},el('span',{class:'lv'},s[0]),el('div',{},el('strong',{},s[1]),el('p',{},s[2])));})));
+    wrap.append(el('h3',{style:'font-size:1.35rem;margin-bottom:12px'},'Rubrik penilaian (100 poin)'));
+    var tb=el('tbody',{});
+    RUBRIC.forEach(function(r,i){
+      var inp=el('input',{class:'rb-in',type:'number',min:'0',max:String(r[1]),step:'1',id:'rb-'+i,'aria-label':'Skor tim untuk '+r[0],placeholder:'0'});
+      inp.addEventListener('input',function(){
+        var v=parseFloat(inp.value);
+        if(isNaN(v)) v=0;
+        v=Math.max(0,Math.min(r[1],v));
+        bossVals[i]=v;
+        bossFilled=[0,1,2,3].some(function(k){return $('rb-'+k).value!=='';});
+        var t=bossVals.reduce(function(a,b){return a+b;},0);
+        $('bossTotal').textContent=t;
+        $('bossHp').textContent='Kekuatan GLITCH tersisa: '+(100-t)+' dari 100';
+        updateScore();
+      });
+      tb.append(el('tr',{},el('td',{},r[0]),el('td',{},r[2]),el('td',{class:'num'},'maks '+r[1]),el('td',{},inp)));
+    });
+    wrap.append(el('div',{class:'tablewrap'},el('table',{},el('thead',{},el('tr',{},el('th',{},'Kriteria'),el('th',{},'Skor penuh jika'),el('th',{},'Maks'),el('th',{},'Skor tim'))),tb)));
+    wrap.append(el('div',{class:'bosstotal'},el('span',{class:'big',id:'bossTotal'},'0'),el('span',{class:'mono'},'/ 100'),el('span',{class:'pill',id:'bossHp'},'Kekuatan GLITCH tersisa: 100 dari 100')));
+    wrap.append(el('p',{style:'color:var(--muted);font-size:.92rem;max-width:64ch'},'Skor tiap kriteria diberikan bertingkat: penuh, sebagian (sekitar setengah), atau minim (sekitar seperempat) sesuai kelengkapan jawaban. Isi kolom skor tim untuk melihat apakah tim lulus.'));
+    var ideal=el('details',{class:'ideal'},el('summary',{},'Contoh jawaban ideal untuk guru'),
+      el('ul',{},
+        el('li',{},el('strong',{},'Celah: '),'(1) kata sandi bawaan pada kamera dan perangkat, berdampak pada akses tidak sah lewat jaringan; (2) data tidak dienkripsi, berdampak pada kebocoran data kesehatan di cloud; (3) firmware tidak diperbarui, berdampak pada kerentanan yang dimanfaatkan hingga mengendalikan aktuator pompa.'),
+        el('li',{},el('strong',{},'Prioritas: '),'(1) isolasi dan matikan akses perangkat terinfeksi serta kendalikan pompa secara manual untuk menjamin air bersih; (2) ganti seluruh kata sandi dan perbarui firmware; (3) aktifkan enkripsi dan pantau anomali. Alasannya: keselamatan layanan dasar warga lebih dulu, lalu menutup celah, lalu pencegahan.'),
+        el('li',{},el('strong',{},'Solusi: '),'enkripsi data saat dikirim dan disimpan, autentikasi dua faktor untuk dasbor, segmentasi jaringan, pembaruan firmware berkala, deteksi anomali berbasis AI, dan edge computing agar pompa punya batas aman lokal.'),
+        el('li',{},el('strong',{},'Peran masa depan: '),'ahli keamanan siber merancang dan menguji pertahanan perangkat; analis data memantau pola tidak wajar; pengembang IoT membangun perangkat aman sejak desain. Etika: data kesehatan hanya dikumpulkan seperlunya, dengan persetujuan warga.')));
+    wrap.append(ideal);
+  }else{
+    var n=0;
+    z.groups.forEach(function(g){
+      var grp=el('div',{class:'qgroup'},el('h3',{},g.title),el('p',{class:'note'},g.note));
+      g.qs.forEach(function(q){n++;grp.append(qcard(q,n));});
+      wrap.append(grp);
+    });
+  }
+  root.append(el('section',{class:'block zone',id:'zona-'+z.id},wrap));
+});
+updateScore();
+})();
+</script>
+
+</body></html>
